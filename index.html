@@ -1,16 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CampusConnect</title>
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CampusConnect - Your College Companion. The all-in-one digital platform for modern college students to track attendance, manage timetables, and organize study schedules.">
+  <meta name="keywords" content="college app, attendance tracker, study planner, student dashboard, campus management">
+  <title>CampusConnect — Your College Companion</title>
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
 
-    <h1>Welcome to CampusConnect 🚀</h1>
+  <!-- Header / Navigation -->
+  <header class="navbar" id="navbar">
+    <div class="container nav-container">
+      <a href="#" class="brand-logo" aria-label="CampusConnect Homepage">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <span>CampusConnect</span>
+      </a>
 
+      <nav class="nav-links" id="nav-links" aria-label="Main Navigation">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#previews" class="nav-link">Product Showcase</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <a href="#pricing" class="btn btn-secondary nav-btn-login">Log In</a>
+        <a href="#pricing" class="btn btn-primary nav-btn-cta">Get Started</a>
+        <button class="mobile-menu-toggle" id="mobile-toggle" aria-label="Open Mobile Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="container hero-container">
+        <div class="hero-badge reveal">
+          <span class="badge-dot"></span>
+          <span>CampusConnect 2.0 is Live</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        
+        <h1 class="hero-title reveal">
+          Your Entire College Life. <br>
+          <span class="gradient-text">Unified in One Workspace.</span>
+        </h1>
+        
+        <p class="hero-subtitle reveal">
+          Track your attendance down to the exact percentage, master your timetable, organize course notes, and never miss an assignment deadline again.
+        </p>
+
+        <div class="hero-cta-group reveal">
+          <a href="#pricing" class="btn btn-primary btn-lg">Start Free Trial</a>
+          <a href="#previews" class="btn btn-secondary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Watch Demo
+          </a>
+        </div>
+
+        <div class="hero-metrics reveal">
+          <div class="metric-item">
+            <span class="metric-number" data-target="150000">0</span><span class="metric-plus">+</span>
+            <span class="metric-label">Active Students</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-number" data-target="98">0</span><span class="metric-plus">%</span>
+            <span class="metric-label">Attendance Target Hit</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-number" data-target="400">0</span><span class="metric-plus">+</span>
+            <span class="metric-label">Campuses Worldwide</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trusted By Section -->
+    <section class="trusted-section">
+      <div class="container">
+        <p class="trusted-title">TRUSTED BY STUDENTS AT TOP UNIVERSITIES WORLDWIDE</p>
+        <div class="trusted-logos">
+          <span class="uni-logo">STANFORD</span>
+          <span class="uni-logo">MIT</span>
+          <span class="uni-logo">HARVARD</span>
+          <span class="uni-logo">OXFORD</span>
+          <span class="uni-logo">BERKELEY</span>
+          <span class="uni-logo">ETH ZÜRICH</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Overview Grid -->
+    <section class="features-section section-padding" id="features">
+      <div class="container">
+        <div class="section-header text-center reveal">
+          <h2 class="section-tag">ENGINEERED FOR EXCELLENCE</h2>
+          <h3 class="section-title">Everything you need to navigate campus life effortlessly.</h3>
+          <p class="section-description">A complete suite of smart tools built specifically for university workflows and academic success.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h4>Smart Attendance Tracking</h4>
+            <p>Know exactly how many classes you can afford to bunk or need to attend to maintain your 75% threshold.</p>
+          </div>
+
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h4>Dynamic Timetables</h4>
+            <p>Auto-syncing class schedules with real-time room changes, professor updates, and automated notifications.</p>
+          </div>
+
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <h4>Centralized Note Hub</h4>
+            <p>Markdown support, PDF attachments, tags, and peer-to-peer sharing for seamless exam preparation.</p>
+          </div>
+
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h4>Assignment Deadlines</h4>
+            <p>Priority-based submission tracking with intelligent countdown timers and calendar synchronization.</p>
+          </div>
+
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <h4>Event Reminders</h4>
+            <p>Never miss hackathons, campus club meetings, guest lectures, or mid-term test schedules.</p>
+          </div>
+
+          <div class="feature-card glass-panel reveal">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </div>
+            <h4>Native Dark Mode</h4>
+            <p>Designed with deep dark glass aesthetic for late-night study sessions and low battery consumption.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Deep Dive Previews -->
+    <section class="previews-section section-padding" id="previews">
+      <div class="container">
+        
+        <!-- Dashboard Preview -->
+        <div class="preview-block reveal">
+          <div class="preview-text">
+            <span class="badge-tag">Command Center</span>
+            <h3>Unified Student Dashboard</h3>
+            <p>Get a bird's-eye view of your entire semester. Instant updates on today's schedule, pending tasks, recent attendance status, and overall GPA projection.</p>
+            <ul class="preview-bullets">
+              <li>Real-time sync across mobile and desktop</li>
+              <li>Customizable widget layout</li>
+            </ul>
+          </div>
+          <div class="preview-card glass-panel floating">
+            <div class="card-header-bar">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+              <span class="bar-title">dashboard.campusconnect.io</span>
+            </div>
+            <div class="dashboard-mock">
+              <div class="dash-sidebar">
+                <div class="dash-avatar"></div>
+                <div class="dash-line short"></div>
+                <div class="dash-line"></div>
+                <div class="dash-line"></div>
+              </div>
+              <div class="dash-main">
+                <div class="dash-stat-row">
+                  <div class="dash-stat-card">
+                    <span class="dash-label">Overall Attendance</span>
+                    <span class="dash-value color-accent">88.4%</span>
+                  </div>
+                  <div class="dash-stat-card">
+                    <span class="dash-label">Tasks Pending</span>
+                    <span class="dash-value">4 Due</span>
+                  </div>
+                </div>
+                <div class="dash-chart-placeholder">
+                  <div class="chart-bar" style="--h: 60%"></div>
+                  <div class="chart-bar" style="--h: 85%"></div>
+                  <div class="chart-bar" style="--h: 70%"></div>
+                  <div class="chart-bar active" style="--h: 92%"></div>
+                  <div class="chart-bar" style="--h: 78%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Tracker Preview Interactivity -->
+        <div class="preview-block reverse reveal">
+          <div class="preview-text">
+            <span class="badge-tag">Smart Calculations</span>
+            <h3>Precision Attendance Calculator</h3>
+            <p>Never get shortage warnings again. Our proprietary formula calculates exactly how many future classes you can safely miss while remaining above target limits.</p>
+            <div class="interactive-calc-box glass-panel">
+              <label for="attended-input">Classes Attended / Total Conducted</label>
+              <div class="calc-inputs">
+                <input type="number" id="attended-input" value="32" min="0">
+                <span>/</span>
+                <input type="number" id="total-input" value="40" min="1">
+              </div>
+              <div class="calc-result">
+                <span>Current Status: <strong id="calc-percentage">80.0%</strong></span>
+                <span class="status-pill safe" id="calc-status">Safe</span>
+              </div>
+            </div>
+          </div>
+          <div class="preview-card glass-panel">
+            <div class="attendance-visual">
+              <div class="circle-progress" id="progress-circle" style="background: conic-gradient(var(--primary-indigo) 80%, var(--bg-tertiary) 0);">
+                <div class="circle-inner">
+                  <span class="circle-percent" id="circle-text">80%</span>
+                  <span class="circle-label">Attendance</span>
+                </div>
+              </div>
+              <div class="subject-list">
+                <div class="subject-item">
+                  <span>Data Structures</span>
+                  <span class="subject-badge badge-green">88%</span>
+                </div>
+                <div class="subject-item">
+                  <span>Computer Networks</span>
+                  <span class="subject-badge badge-amber">74%</span>
+                </div>
+                <div class="subject-item">
+                  <span>Linear Algebra</span>
+                  <span class="subject-badge badge-green">91%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timetable & Notes Preview -->
+        <div class="preview-grid-2">
+          <div class="preview-card glass-panel reveal">
+            <span class="badge-tag">Schedule</span>
+            <h3>Interactive Timetable</h3>
+            <p>Sleek weekly schedule grid with automatic location maps and professor contact cards.</p>
+            <div class="timetable-mock">
+              <div class="time-slot active">
+                <span class="time">09:00 AM</span>
+                <div class="slot-details">
+                  <strong>CS301: Systems Programming</strong>
+                  <small>Hall 4B • Dr. Aris</small>
+                </div>
+              </div>
+              <div class="time-slot">
+                <span class="time">11:30 AM</span>
+                <div class="slot-details">
+                  <strong>MA202: Discrete Mathematics</strong>
+                  <small>Auditorium 1</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-card glass-panel reveal">
+            <span class="badge-tag">Knowledge</span>
+            <h3>Notes & Study Planner</h3>
+            <p>Organize notes by subject tag, attach lecture recordings, and manage revision goals.</p>
+            <div class="notes-mock">
+              <div class="note-chip">
+                <div class="note-tag">ALGORITHMS</div>
+                <div class="note-title">Dynamic Programming vs Greedy</div>
+                <div class="note-date">Updated 2h ago</div>
+              </div>
+              <div class="note-chip">
+                <div class="note-tag alt">PHYSICS</div>
+                <div class="note-title">Quantum Optics Formula Sheet</div>
+                <div class="note-date">Updated Yesterday</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section section-padding" id="pricing">
+      <div class="container">
+        <div class="section-header text-center reveal">
+          <h2 class="section-tag">TRANSPARENT PRICING</h2>
+          <h3 class="section-title">Built for student budgets.</h3>
+          <p class="section-description">Start for free with core features, or unlock ultimate automation with Pro.</p>
+        </div>
+
+        <div class="pricing-grid">
+          <!-- Free Tier -->
+          <div class="pricing-card glass-panel reveal">
+            <div class="pricing-header">
+              <h4>Starter</h4>
+              <p>Essential campus management tools.</p>
+              <div class="price-amount">$0 <span>/ forever</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Basic Attendance Tracking</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Weekly Timetable Manager</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Up to 50MB Notes Storage</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Standard Task Manager</li>
+            </ul>
+            <a href="#contact" class="btn btn-secondary btn-full">Create Free Account</a>
+          </div>
+
+          <!-- Pro Tier (Popular) -->
+          <div class="pricing-card glass-panel featured reveal">
+            <div class="popular-badge">MOST POPULAR</div>
+            <div class="pricing-header">
+              <h4>Pro Campus</h4>
+              <p>Complete academic optimization.</p>
+              <div class="price-amount">$4.99 <span>/ month</span></div>
+            </div>
+            <ul class="pricing-features">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> <strong>Unlimited</strong> Attendance Tracking</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Predictive Bunk Calculator</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> 10GB Cloud Note Storage</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Cross-device Calendar Sync</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Priority Assignment Alerts</li>
+            </ul>
+            <a href="#contact" class="btn btn-primary btn-full">Start 14-Day Free Trial</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials-section section-padding">
+      <div class="container">
+        <div class="section-header text-center reveal">
+          <h2 class="section-tag">STUDENT STORIES</h2>
+          <h3 class="section-title">Loved by students on every campus.</h3>
+        </div>
+
+        <div class="testimonials-grid">
+          <div class="testimonial-card glass-panel reveal">
+            <p class="quote">"CampusConnect literally saved my semester. The attendance calculator prevented me from falling below 75% in Thermodynamics."</p>
+            <div class="user-info">
+              <div class="avatar-ph">AL</div>
+              <div>
+                <strong>Alex Liang</strong>
+                <small>Mechanical Eng., Stanford</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="testimonial-card glass-panel reveal">
+            <p class="quote">"The UI feels like Linear or Notion, but tailored specifically to classes and assignments. Standard calendar apps don't compare."</p>
+            <div class="user-info">
+              <div class="avatar-ph">SR</div>
+              <div>
+                <strong>Sophia Rivera</strong>
+                <small>Computer Science, MIT</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion -->
+    <section class="faq-section section-padding" id="faq">
+      <div class="container max-width-md">
+        <div class="section-header text-center reveal">
+          <h2 class="section-tag">FREQUENTLY ASKED QUESTIONS</h2>
+          <h3 class="section-title">Everything you need to know.</h3>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item glass-panel reveal">
+            <button class="faq-question">
+              <span>Is CampusConnect free to use?</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Yes! The Starter plan is 100% free forever and provides full access to attendance tracking, basic timetable management, and task lists.</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel reveal">
+            <button class="faq-question">
+              <span>Can I synchronize my schedule across desktop and mobile?</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Absolutely. CampusConnect operates as a progressive cloud application that seamlessly syncs your data in real-time across all browser sessions and devices.</p>
+            </div>
+          </div>
+
+          <div class="faq-item glass-panel reveal">
+            <button class="faq-question">
+              <span>How does the Attendance Bunk Calculator work?</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>You set your target percentage (e.g., 75%). The platform calculates the maximum number of upcoming classes you can skip while staying safely above the required threshold.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact & Newsletter -->
+    <section class="contact-section section-padding" id="contact">
+      <div class="container">
+        <div class="contact-wrapper glass-panel reveal">
+          <div class="contact-grid">
+            <div class="contact-info">
+              <h3 class="section-title">Get early access to CampusConnect.</h3>
+              <p>Join over 150,000 students modernizing their university workflow.</p>
+              
+              <form class="newsletter-form" id="newsletter-form">
+                <div class="input-group">
+                  <input type="email" placeholder="Enter your college .edu email" required id="email-input">
+                  <button type="submit" class="btn btn-primary">Request Access</button>
+                </div>
+                <p class="form-feedback" id="form-feedback"></p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <a href="#" class="brand-logo">
+          <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          </div>
+          <span>CampusConnect</span>
+        </a>
+        <p>Your College Companion. Designed with precision for higher education.</p>
+      </div>
+
+      <div class="footer-links-group">
+        <div class="footer-column">
+          <h5>Product</h5>
+          <a href="#features">Features</a>
+          <a href="#previews">Showcase</a>
+          <a href="#pricing">Pricing</a>
+        </div>
+        <div class="footer-column">
+          <h5>Resources</h5>
+          <a href="#faq">FAQ</a>
+          <a href="#">Guides</a>
+          <a href="#">API Docs</a>
+        </div>
+        <div class="footer-column">
+          <h5>Company</h5>
+          <a href="#">About Us</a>
+          <a href="#">Careers</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 CampusConnect Inc. All rights reserved.</p>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
