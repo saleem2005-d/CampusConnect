@@ -34,78 +34,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initUserSession() {
     if (!currentUser) {
-      userModal.classList.remove('hidden');
+      if (userModal) userModal.classList.remove('hidden');
     } else {
-      userGreeting.textContent = `Welcome, ${currentUser.name}`;
+      if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
+      if (userModal) userModal.classList.add('hidden');
       loadSubjects();
     }
   }
 
-  userForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = inputUserName.value.trim();
-    const email = inputUserEmail.value.trim();
-    if (!name || !email) return;
+  if (userForm) {
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = inputUserName.value.trim();
+      const email = inputUserEmail.value.trim();
+      if (!name || !email) return;
 
-    try {
-      const res = await fetch('/api/user/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
-      });
-      if (res.ok) {
-        currentUser = await res.json();
-        localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
-        userGreeting.textContent = `Welcome, ${currentUser.name}`;
-        userModal.classList.add('hidden');
-        loadSubjects();
+      try {
+        const res = await fetch('/api/user/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        });
+        if (res.ok) {
+          currentUser = await res.json();
+          localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
+          if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
+          userModal.classList.add('hidden');
+          loadSubjects();
+        }
+      } catch (err) {
+        alert('Error saving profile. Make sure the server is running.');
       }
-    } catch (err) {
-      alert('Error saving profile.');
-    }
-  });
+    });
+  }
 
   async function loadSubjects() {
-    if (!currentUser) return;
+    if (!currentUser || !subjectDropdown) return;
     try {
       const res = await fetch(`/api/subjects/${currentUser.id}`);
+      if (!res.ok) throw new Error('Failed to load');
       const list = await res.json();
-      subjectDropdown.innerHTML = '';
       
-      list.forEach(sub => {
-        const opt = document.createElement('option');
-        opt.value = sub.id;
-        opt.textContent = sub.name;
-        subjectDropdown.appendChild(opt);
-      });
-
-      if (list.length > 0) {
+      subjectDropdown.innerHTML = '';
+      if (list && list.length > 0) {
+        list.forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub.id;
+          opt.textContent = sub.name;
+          subjectDropdown.appendChild(opt);
+        });
         currentSubjectId = list[0].id;
         fetchAttendanceRecords();
       } else {
-        subjectDropdown.innerHTML = '<option value="">No Subjects</option>';
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "No Subjects Created";
+        subjectDropdown.appendChild(opt);
+        currentSubjectId = null;
         attendanceData = {};
         renderCalendar();
       }
     } catch (err) {
-      console.error('Failed to load subjects:', err);
+      console.error('Error loading subjects:', err);
+      renderCalendar();
     }
   }
 
   async function fetchAttendanceRecords() {
-    if (!currentSubjectId) return;
+    if (!currentSubjectId) {
+      attendanceData = {};
+      renderCalendar();
+      return;
+    }
     try {
       const res = await fetch(`/api/attendance/${currentSubjectId}`);
-      if (res.ok) attendanceData = await res.json();
+      if (res.ok) {
+        attendanceData = await res.json();
+      } else {
+        attendanceData = {};
+      }
     } catch (err) {
-      console.error('Error fetching records:', err);
+      console.error('Error fetching attendance records:', err);
+      attendanceData = {};
     }
     renderCalendar();
   }
 
   async function setDayStatus(status) {
-    if (!selectedDateKey) return alert('Select a date on the calendar first.');
-    if (!currentSubjectId) return alert('Create or select a subject first.');
+    if (!selectedDateKey) return alert('Please select a date on the calendar first.');
+    if (!currentSubjectId) return alert('Please add or select a subject first.');
 
     try {
       if (status === 'clear') {
@@ -121,49 +138,56 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renderCalendar();
     } catch (err) {
-      alert('Failed to update attendance.');
+      alert('Failed to update attendance record.');
     }
   }
 
-  // Subject Modal Actions
-  openSubjectModalBtn.addEventListener('click', () => {
-    if (!currentUser) return alert('Please set up your profile first.');
-    inputSubjectName.value = '';
-    subjectModal.classList.remove('hidden');
-  });
+  if (openSubjectModalBtn) {
+    openSubjectModalBtn.addEventListener('click', () => {
+      if (!currentUser) return alert('Please set up your profile first.');
+      if (inputSubjectName) inputSubjectName.value = '';
+      if (subjectModal) subjectModal.classList.remove('hidden');
+    });
+  }
 
-  closeSubjectModalBtn.addEventListener('click', () => {
-    subjectModal.classList.add('hidden');
-  });
+  if (closeSubjectModalBtn) {
+    closeSubjectModalBtn.addEventListener('click', () => {
+      if (subjectModal) subjectModal.classList.add('hidden');
+    });
+  }
 
-  subjectForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = inputSubjectName.value.trim();
-    if (!name || !currentUser) return;
+  if (subjectForm) {
+    subjectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = inputSubjectName.value.trim();
+      if (!name || !currentUser) return;
 
-    try {
-      const res = await fetch('/api/subjects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, name })
-      });
-      if (res.ok) {
-        const newSubject = await res.json();
-        await loadSubjects();
-        subjectDropdown.value = newSubject.id;
-        currentSubjectId = newSubject.id;
-        fetchAttendanceRecords();
-        subjectModal.classList.add('hidden');
+      try {
+        const res = await fetch('/api/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, name })
+        });
+        if (res.ok) {
+          const newSubject = await res.json();
+          await loadSubjects();
+          if (subjectDropdown) subjectDropdown.value = newSubject.id;
+          currentSubjectId = newSubject.id;
+          fetchAttendanceRecords();
+          if (subjectModal) subjectModal.classList.add('hidden');
+        }
+      } catch (err) {
+        alert('Failed to create new subject.');
       }
-    } catch (err) {
-      alert('Failed to create subject.');
-    }
-  });
+    });
+  }
 
-  subjectDropdown.addEventListener('change', (e) => {
-    currentSubjectId = e.target.value;
-    fetchAttendanceRecords();
-  });
+  if (subjectDropdown) {
+    subjectDropdown.addEventListener('change', (e) => {
+      currentSubjectId = e.target.value;
+      fetchAttendanceRecords();
+    });
+  }
 
   function renderCalendar() {
     const year = currentDate.getFullYear();
@@ -192,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       if (dateKey === todayKey) cell.classList.add('today');
-      if (attendanceData[dateKey]) cell.classList.add(attendanceData[dateKey]);
+      if (attendanceData && attendanceData[dateKey]) cell.classList.add(attendanceData[dateKey]);
       if (selectedDateKey === dateKey) cell.classList.add('selected');
 
       cell.addEventListener('click', () => {
@@ -212,11 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function calculateMetrics() {
     let p = 0, a = 0, h = 0;
-    Object.values(attendanceData).forEach(st => {
-      if (st === 'present') p++;
-      if (st === 'absent') a++;
-      if (st === 'holiday') h++;
-    });
+    if (attendanceData) {
+      Object.values(attendanceData).forEach(st => {
+        if (st === 'present') p++;
+        if (st === 'absent') a++;
+        if (st === 'holiday') h++;
+      });
+    }
 
     const total = p + a;
     const pct = total > 0 ? ((p / total) * 100).toFixed(1) : 0;
@@ -250,41 +276,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Event Listeners
-  document.getElementById('btn-mark-present').addEventListener('click', () => setDayStatus('present'));
-  document.getElementById('btn-mark-absent').addEventListener('click', () => setDayStatus('absent'));
-  document.getElementById('btn-mark-holiday').addEventListener('click', () => setDayStatus('holiday'));
-  document.getElementById('btn-mark-clear').addEventListener('click', () => setDayStatus('clear'));
+  // Buttons & Navigation
+  const btnP = document.getElementById('btn-mark-present');
+  const btnA = document.getElementById('btn-mark-absent');
+  const btnH = document.getElementById('btn-mark-holiday');
+  const btnC = document.getElementById('btn-mark-clear');
+  const prevBtn = document.getElementById('prev-month-btn');
+  const nextBtn = document.getElementById('next-month-btn');
+  const themeBtn = document.getElementById('theme-toggle');
+  const notifyBtn = document.getElementById('notify-btn');
+  const profileBtn = document.getElementById('profile-btn');
 
-  document.getElementById('prev-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
-  document.getElementById('next-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+  if (btnP) btnP.addEventListener('click', () => setDayStatus('present'));
+  if (btnA) btnA.addEventListener('click', () => setDayStatus('absent'));
+  if (btnH) btnH.addEventListener('click', () => setDayStatus('holiday'));
+  if (btnC) btnC.addEventListener('click', () => setDayStatus('clear'));
 
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  });
+  if (prevBtn) prevBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
 
-  document.getElementById('notify-btn').addEventListener('click', () => {
-    if (!("Notification" in window)) return alert("Browser does not support notifications.");
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        new Notification("CampusConnect Active", { body: "Daily attendance reminder activated!" });
-      }
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
     });
-  });
+  }
 
-  document.getElementById('profile-btn').addEventListener('click', () => {
-    if (currentUser) {
-      inputUserName.value = currentUser.name;
-      inputUserEmail.value = currentUser.email;
-    }
-    userModal.classList.remove('hidden');
-  });
+  if (notifyBtn) {
+    notifyBtn.addEventListener('click', () => {
+      if (!("Notification" in window)) return alert("Browser does not support notifications.");
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification("CampusConnect Active", { body: "Daily attendance reminder activated!" });
+        }
+      });
+    });
+  }
+
+  if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+      if (currentUser) {
+        if (inputUserName) inputUserName.value = currentUser.name;
+        if (inputUserEmail) inputUserEmail.value = currentUser.email;
+      }
+      if (userModal) userModal.classList.remove('hidden');
+    });
+  }
 
   selectedDateKey = formatDateKey(new Date());
   if (selectedDateDisplay) {
     const p = selectedDateKey.split('-');
     selectedDateDisplay.textContent = `${p[2]}/${p[1]}/${p[0]}`;
   }
+  
   initUserSession();
 });
