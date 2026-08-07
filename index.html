@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusConnect — Attendance Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div>
+        <h1>CampusConnect</h1>
+        <p class="subtitle">Smart Attendance Engine</p>
+      </div>
+      <div class="header-actions">
+        <button id="export-btn" class="btn-icon" title="Export Backup">📥</button>
+        <button id="import-btn" class="btn-icon" title="Import Backup">📤</button>
+        <button id="theme-toggle" class="btn-icon" title="Toggle Theme">🌓</button>
+        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <section class="card calendar-card">
+        <div class="calendar-header">
+          <button id="prev-month-btn" class="btn-month">&lt;</button>
+          <h2 id="current-month-label">Loading...</h2>
+          <button id="next-month-btn" class="btn-month">&gt;</button>
+        </div>
+
+        <div class="calendar-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+
+        <div id="calendar-days-grid" class="days-grid"></div>
+      </section>
+
+      <section class="card controls-card">
+        <div class="selected-date-wrapper">
+          <span class="label">Target Date: </span>
+          <span id="selected-date-display" class="date-val">Today</span>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="btn-mark-present" class="btn btn-present">✓ Present</button>
+          <button id="btn-mark-absent" class="btn btn-absent">✕ Absent</button>
+          <button id="btn-mark-holiday" class="btn btn-holiday">🏖 Holiday</button>
+          <button id="btn-mark-clear" class="btn btn-clear">🧹 Clear</button>
+        </div>
+
+        <div class="stats-container">
+          <div class="stat-box main-stat">
+            <span class="stat-label">Attendance Rate</span>
+            <span id="stat-percentage" class="stat-value">0.0%</span>
+            <span id="stat-status-badge" class="stat-badge safe">No Data</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Attendance Streak</span>
+            <span id="stat-streak" class="stat-value">0 Days</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Classes Attended</span>
+            <span id="stat-attended" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Classes Missed</span>
+            <span id="stat-absent" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="bunk-calculator">
+          <h4>Bunk Margin Analysis</h4>
+          <p id="bunk-calculator-text">Select calendar dates to compute target thresholds.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

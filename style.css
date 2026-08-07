@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  
+  --primary: #3b82f6;
+  --present: #10b981;
+  --present-bg: rgba(16, 185, 129, 0.12);
+  --absent: #ef4444;
+  --absent-bg: rgba(239, 68, 68, 0.12);
+  --holiday: #f59e0b;
+  --holiday-bg: rgba(245, 158, 11, 0.12);
+
+  --radius-xl: 20px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  --transition-fast: 0.15s ease;
+}
+
+[data-theme="dark"] {
+  --bg-main: #0b0f17;
+  --bg-card: #151c28;
+  --bg-card-subtle: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #243044;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 460px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.app-header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--text-primary), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+
+.btn-icon:hover { transform: scale(1.05); }
+.btn-icon:active { transform: scale(0.95); }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.calendar-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.btn-month {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background-color: var(--bg-card-subtle);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.day-cell.empty { background: transparent; cursor: default; }
+.day-cell.today { border-color: var(--primary); color: var(--primary); font-weight: 800; }
+.day-cell.selected { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.day-cell.present { background-color: var(--present-bg); color: var(--present); border-color: rgba(16, 185, 129, 0.3); }
+.day-cell.absent { background-color: var(--absent-bg); color: var(--absent); border-color: rgba(239, 68, 68, 0.3); }
+.day-cell.holiday { background-color: var(--holiday-bg); color: var(--holiday); border-color: rgba(245, 158, 11, 0.3); }
+
+.selected-date-wrapper {
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.selected-date-wrapper .date-val {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-present { border-color: rgba(16, 185, 129, 0.4); color: var(--present); background: var(--present-bg); }
+.btn-absent { border-color: rgba(239, 68, 68, 0.4); color: var(--absent); background: var(--absent-bg); }
+.btn-holiday { border-color: rgba(245, 158, 11, 0.4); color: var(--holiday); background: var(--holiday-bg); }
+.btn-clear { border-color: var(--border-color); color: var(--text-secondary); background: var(--bg-card-subtle); }
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.stat-box {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stat-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-top: 6px;
+  width: fit-content;
+}
+
+.stat-badge.safe { background: var(--present-bg); color: var(--present); }
+.stat-badge.warning { background: var(--absent-bg); color: var(--absent); }
+
+.bunk-calculator {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card-subtle);
+  border: 1px dashed var(--border-color);
+}
+
+.bunk-calculator h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.bunk-calculator p {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
