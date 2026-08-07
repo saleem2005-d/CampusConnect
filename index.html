@@ -3,37 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CampusConnect — Smart Attendance Engine</title>
+  <title>CampusConnect — Student Attendance Engine</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Header -->
+    <!-- Top Bar -->
     <header class="app-header">
       <div>
         <h1 class="brand-title">CampusConnect</h1>
-        <p class="subtitle" id="user-greeting">Loading profile...</p>
+        <p class="subtitle" id="user-greeting">Loading student profile...</p>
       </div>
       <div class="header-actions">
         <button id="notify-btn" class="btn-icon" title="Daily Reminders">🔔</button>
-        <button id="profile-btn" class="btn-icon" title="User Profile">👤</button>
-        <button id="theme-toggle" class="btn-icon" title="Toggle Theme">🌓</button>
+        <button id="profile-btn" class="btn-icon" title="Developer & Student Profile">👤</button>
+        <button id="theme-toggle" class="btn-icon" title="Toggle Dark/Light Mode">🌓</button>
       </div>
     </header>
 
-    <!-- Active Subject Switcher Bar -->
-    <div class="card subject-bar">
-      <div class="subject-select-group">
-        <label for="subject-dropdown">Subject:</label>
-        <select id="subject-dropdown" class="dropdown-input"></select>
-      </div>
-      <button id="open-subject-modal-btn" class="btn btn-primary">+ Subject</button>
-    </div>
-
-    <!-- Main Dashboard -->
+    <!-- Main Dashboard Grid -->
     <main class="dashboard-grid">
-      <!-- Calendar Panel -->
+      <!-- Calendar Card -->
       <section class="card calendar-card">
         <div class="calendar-header">
           <button id="prev-month-btn" class="btn-month" aria-label="Previous Month">&lt;</button>
@@ -48,11 +39,11 @@
         <div id="calendar-days-grid" class="days-grid"></div>
       </section>
 
-      <!-- Analytics & Controls Panel -->
+      <!-- Analytics & Controls Card -->
       <section class="card controls-card">
         <div class="selected-date-wrapper">
-          <span class="label">Selected Date: </span>
-          <span id="selected-date-display" class="date-val">None</span>
+          <span class="label">Target Date: </span>
+          <span id="selected-date-display" class="date-val">Today</span>
         </div>
         
         <div class="action-buttons">
@@ -66,7 +57,7 @@
           <div class="stat-box main-stat">
             <span class="stat-label">Attendance Rate</span>
             <span id="stat-percentage" class="stat-value">0.0%</span>
-            <span id="stat-status-badge" class="stat-badge safe">No Records</span>
+            <span id="stat-status-badge" class="stat-badge safe">No Data</span>
           </div>
           <div class="stat-box">
             <span class="stat-label">Attended</span>
@@ -83,18 +74,22 @@
         </div>
 
         <div class="bunk-calculator">
-          <h4>Bunk Margin Analysis</h4>
+          <h4>Bunk Safety Margin</h4>
           <p id="bunk-calculator-text">Select calendar dates to compute target thresholds.</p>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- User Profile Modal -->
+  <!-- Advanced Student & Developer Profile Modal -->
   <div id="user-modal" class="modal-overlay hidden">
     <div class="modal-card">
-      <h3>User Profile</h3>
-      <p class="modal-desc">Configure your student identity below.</p>
+      <div class="modal-header">
+        <h3>Student Account Dashboard</h3>
+        <button id="close-profile-modal-btn" class="btn-close">&times;</button>
+      </div>
+      <p class="modal-desc">Configure your profile details and app preferences.</p>
+      
       <form id="user-form">
         <div class="form-group">
           <label for="input-user-name">Full Name</label>
@@ -104,25 +99,26 @@
           <label for="input-user-email">Email Address</label>
           <input type="email" id="input-user-email" class="text-input" placeholder="e.g. saleem@example.com" required>
         </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">Save Profile</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Subject Modal -->
-  <div id="subject-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <h3>Add New Subject</h3>
-      <form id="subject-form">
         <div class="form-group">
-          <label for="input-subject-name">Subject Title</label>
-          <input type="text" id="input-subject-name" class="text-input" placeholder="e.g. Computer Networks" required>
+          <label for="input-user-role">Academic Track / Department</label>
+          <input type="text" id="input-user-role" class="text-input" placeholder="e.g. Computer Science & Engineering (3rd Year)">
         </div>
+
+        <!-- System Status & Data Controls -->
+        <div class="profile-system-info">
+          <div class="info-row">
+            <span>Database Storage:</span>
+            <strong id="db-status-label">SQLite WASM (Active)</strong>
+          </div>
+          <div class="info-row">
+            <span>Target Threshold:</span>
+            <strong>75.0% Minimum</strong>
+          </div>
+        </div>
+
         <div class="modal-actions">
-          <button type="button" id="close-subject-modal-btn" class="btn btn-clear">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Subject</button>
+          <button type="button" id="reset-data-btn" class="btn btn-danger">Clear All Records</button>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
         </div>
       </form>
     </div>

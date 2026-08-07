@@ -1,397 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusConnect — Student Attendance Engine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-:root {
-  --bg-main: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-card-subtle: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
-  
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  
-  --present: #16a34a;
-  --present-bg: rgba(22, 163, 74, 0.12);
-  
-  --absent: #dc2626;
-  --absent-bg: rgba(220, 38, 38, 0.12);
-  
-  --holiday: #d97706;
-  --holiday-bg: rgba(217, 119, 6, 0.12);
+  <div class="app-container">
+    <!-- Top Bar -->
+    <header class="app-header">
+      <div>
+        <h1 class="brand-title">CampusConnect</h1>
+        <p class="subtitle" id="user-greeting">Loading student profile...</p>
+      </div>
+      <div class="header-actions">
+        <button id="notify-btn" class="btn-icon" title="Daily Reminders">🔔</button>
+        <button id="profile-btn" class="btn-icon" title="Developer & Student Profile">👤</button>
+        <button id="theme-toggle" class="btn-icon" title="Toggle Dark/Light Mode">🌓</button>
+      </div>
+    </header>
 
-  --radius-xl: 20px;
-  --radius-lg: 14px;
-  --radius-md: 10px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
+      <!-- Calendar Card -->
+      <section class="card calendar-card">
+        <div class="calendar-header">
+          <button id="prev-month-btn" class="btn-month" aria-label="Previous Month">&lt;</button>
+          <h2 id="current-month-label">Month Year</h2>
+          <button id="next-month-btn" class="btn-month" aria-label="Next Month">&gt;</button>
+        </div>
 
-[data-theme="dark"] {
-  --bg-main: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-subtle: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --border-color: #334155;
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-}
+        <div class="calendar-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
+        <div id="calendar-days-grid" class="days-grid"></div>
+      </section>
 
-body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  min-height: 100vh;
-  padding: 20px 14px 40px;
-  display: flex;
-  justify-content: center;
-}
+      <!-- Analytics & Controls Card -->
+      <section class="card controls-card">
+        <div class="selected-date-wrapper">
+          <span class="label">Target Date: </span>
+          <span id="selected-date-display" class="date-val">Today</span>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="btn-mark-present" class="btn btn-present">✓ Present</button>
+          <button id="btn-mark-absent" class="btn btn-absent">✕ Absent</button>
+          <button id="btn-mark-holiday" class="btn btn-holiday">🏖 Holiday</button>
+          <button id="btn-mark-clear" class="btn btn-clear">🧹 Clear</button>
+        </div>
 
-.app-container {
-  width: 100%;
-  max-width: 480px;
-}
+        <div class="stats-container">
+          <div class="stat-box main-stat">
+            <span class="stat-label">Attendance Rate</span>
+            <span id="stat-percentage" class="stat-value">0.0%</span>
+            <span id="stat-status-badge" class="stat-badge safe">No Data</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Attended</span>
+            <span id="stat-attended" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Missed</span>
+            <span id="stat-absent" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Holidays</span>
+            <span id="stat-holidays" class="stat-value">0</span>
+          </div>
+        </div>
 
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
+        <div class="bunk-calculator">
+          <h4>Bunk Safety Margin</h4>
+          <p id="bunk-calculator-text">Select calendar dates to compute target thresholds.</p>
+        </div>
+      </section>
+    </main>
+  </div>
 
-.brand-title {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--text-primary), var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+  <!-- Advanced Student & Developer Profile Modal -->
+  <div id="user-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Student Account Dashboard</h3>
+        <button id="close-profile-modal-btn" class="btn-close">&times;</button>
+      </div>
+      <p class="modal-desc">Configure your profile details and app preferences.</p>
+      
+      <form id="user-form">
+        <div class="form-group">
+          <label for="input-user-name">Full Name</label>
+          <input type="text" id="input-user-name" class="text-input" placeholder="e.g. Saleem Dudekula" required>
+        </div>
+        <div class="form-group">
+          <label for="input-user-email">Email Address</label>
+          <input type="email" id="input-user-email" class="text-input" placeholder="e.g. saleem@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="input-user-role">Academic Track / Department</label>
+          <input type="text" id="input-user-role" class="text-input" placeholder="e.g. Computer Science & Engineering (3rd Year)">
+        </div>
 
-.subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
+        <!-- System Status & Data Controls -->
+        <div class="profile-system-info">
+          <div class="info-row">
+            <span>Database Storage:</span>
+            <strong id="db-status-label">SQLite WASM (Active)</strong>
+          </div>
+          <div class="info-row">
+            <span>Target Threshold:</span>
+            <strong>75.0% Minimum</strong>
+          </div>
+        </div>
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
+        <div class="modal-actions">
+          <button type="button" id="reset-data-btn" class="btn btn-danger">Clear All Records</button>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-.btn-icon {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-fast);
-}
-
-.btn-icon:active { transform: scale(0.92); }
-
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 18px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-md);
-}
-
-/* Subject Bar */
-.subject-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-}
-
-.subject-select-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.subject-select-group label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.dropdown-input {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 14px;
-  outline: none;
-}
-
-/* Buttons */
-.btn {
-  padding: 10px 14px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
-}
-
-.btn:active { transform: scale(0.96); }
-
-.btn-primary {
-  background: var(--primary);
-  color: #ffffff;
-  border: none;
-  white-space: nowrap;
-}
-
-.btn-primary:hover { background: var(--primary-hover); }
-
-.btn-present { border-color: rgba(22, 163, 74, 0.4); color: var(--present); background: var(--present-bg); }
-.btn-absent { border-color: rgba(220, 38, 38, 0.4); color: var(--absent); background: var(--absent-bg); }
-.btn-holiday { border-color: rgba(217, 119, 6, 0.4); color: var(--holiday); background: var(--holiday-bg); }
-.btn-clear { border-color: var(--border-color); color: var(--text-secondary); background: var(--bg-card-subtle); }
-
-/* Calendar Grid */
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.calendar-header h2 {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.btn-month {
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.day-cell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  border: 1px solid transparent;
-  background-color: var(--bg-card-subtle);
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.day-cell.empty { background: transparent; cursor: default; }
-.day-cell.today { border-color: var(--primary); color: var(--primary); font-weight: 800; }
-.day-cell.selected { outline: 2px solid var(--primary); outline-offset: 1px; }
-
-.day-cell.present { background-color: var(--present-bg); color: var(--present); border-color: rgba(22, 163, 74, 0.3); }
-.day-cell.absent { background-color: var(--absent-bg); color: var(--absent); border-color: rgba(220, 38, 38, 0.3); }
-.day-cell.holiday { background-color: var(--holiday-bg); color: var(--holiday); border-color: rgba(217, 119, 6, 0.3); }
-
-/* Controls & Analytics */
-.selected-date-wrapper {
-  margin-bottom: 14px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.selected-date-wrapper .date-val {
-  color: var(--primary);
-  font-weight: 700;
-}
-
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.stat-box {
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border-color);
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.stat-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-top: 6px;
-  width: fit-content;
-}
-
-.stat-badge.safe { background: var(--present-bg); color: var(--present); }
-.stat-badge.warning { background: var(--absent-bg); color: var(--absent); }
-
-.bunk-calculator {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-card-subtle);
-  border: 1px dashed var(--border-color);
-}
-
-.bunk-calculator h4 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.bunk-calculator p {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-/* Modal System */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  padding: 16px;
-}
-
-.modal-overlay.hidden { display: none; }
-
-.modal-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: var(--shadow-md);
-}
-
-.modal-card h3 {
-  font-size: 18px;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-
-.modal-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 18px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.text-input {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  outline: none;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
+  <script src="script.js"></script>
+</body>
+</html>
