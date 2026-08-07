@@ -27,6 +27,7 @@ initSqlJs().then((SQL) => {
     try {
       const fileBuffer = fs.readFileSync(dbPath);
       db = new SQL.Database(fileBuffer);
+      console.log('Database loaded successfully.');
     } catch (err) {
       db = new SQL.Database();
     }
@@ -34,7 +35,6 @@ initSqlJs().then((SQL) => {
     db = new SQL.Database();
   }
 
-  // Database Schema
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -46,35 +46,41 @@ initSqlJs().then((SQL) => {
   db.run(`
     CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
-      user_id TEXT,
-      name TEXT NOT NULL
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
     );
   `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS attendance (
-      subject_id TEXT,
-      date_key TEXT,
+      subject_id TEXT NOT NULL,
+      date_key TEXT NOT NULL,
       status TEXT NOT NULL,
-      PRIMARY KEY (subject_id, date_key)
+      PRIMARY KEY (subject_id, date_key),
+      FOREIGN KEY(subject_id) REFERENCES subjects(id)
     );
   `);
 
   persistToDisk();
 
-  // User Registration / Profile Save
+  // Save / Retrieve User Profile
   app.post('/api/user/save', (req, res) => {
     const { name, email } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
 
     try {
-      const existing = db.exec("SELECT id, name, email FROM users WHERE email = '" + email.replace(/'/g, "''") + "'");
+      const stmt = db.prepare("SELECT id, name, email FROM users WHERE email = ?");
+      stmt.bind([email]);
       let userId;
 
-      if (existing.length > 0 && existing[0].values.length > 0) {
-        userId = existing[0].values[0][0];
+      if (stmt.step()) {
+        const row = stmt.get();
+        userId = row[0];
+        stmt.free();
         db.run("UPDATE users SET name = ? WHERE id = ?;", [name, userId]);
       } else {
+        stmt.free();
         userId = 'usr_' + Date.now();
         db.run("INSERT INTO users (id, name, email) VALUES (?, ?, ?);", [userId, name, email]);
         db.run("INSERT INTO subjects (id, user_id, name) VALUES (?, ?, ?);", ['sub_' + Date.now(), userId, 'General Attendance']);
@@ -86,7 +92,7 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Fetch Subjects for a User
+  // Fetch User Subjects
   app.get('/api/subjects/:userId', (req, res) => {
     const { userId } = req.params;
     try {
@@ -104,7 +110,7 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Add Subject
+  // Create Subject
   app.post('/api/subjects', (req, res) => {
     const { userId, name } = req.body;
     if (!userId || !name) return res.status(400).json({ error: 'User ID and Subject name required.' });
@@ -118,7 +124,7 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Fetch Attendance
+  // Fetch Attendance by Subject
   app.get('/api/attendance/:subjectId', (req, res) => {
     const { subjectId } = req.params;
     try {
@@ -151,7 +157,7 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Delete Attendance Entry
+  // Delete Entry
   app.delete('/api/attendance/:subjectId/:dateKey', (req, res) => {
     const { subjectId, dateKey } = req.params;
     try {
@@ -163,5 +169,7 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
-}).catch(err => console.error(err));
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running at http://127.0.0.1:${PORT}`);
+  });
+}).catch(err => console.error('Failed to initialize Database:', err));
