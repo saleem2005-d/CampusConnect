@@ -3,12 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedDateKey = null;
   let attendanceData = {};
   let currentSubjectId = null;
+  let currentUser = JSON.parse(localStorage.getItem('campusconnect_user')) || null;
 
   const monthLabel = document.getElementById('current-month-label');
   const daysGrid = document.getElementById('calendar-days-grid');
   const selectedDateDisplay = document.getElementById('selected-date-display');
   const bunkCalcText = document.getElementById('bunk-calculator-text');
   const subjectDropdown = document.getElementById('subject-dropdown');
+  const userGreeting = document.getElementById('user-greeting');
 
   function formatDateKey(dateObj) {
     const y = dateObj.getFullYear();
@@ -17,9 +19,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
+  async function initUserSession() {
+    if (!currentUser) {
+      const name = prompt('Enter Your Name:', 'Saleem');
+      const email = prompt('Enter Your Email:', 'saleem@example.com');
+      if (name && email) {
+        const res = await fetch('/api/user/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        });
+        currentUser = await res.json();
+        localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
+      }
+    }
+    if (currentUser) {
+      userGreeting.textContent = `Welcome, ${currentUser.name}`;
+      loadSubjects();
+    }
+  }
+
   async function loadSubjects() {
+    if (!currentUser) return;
     try {
-      const res = await fetch('/api/subjects');
+      const res = await fetch(`/api/subjects/${currentUser.id}`);
       const list = await res.json();
       subjectDropdown.innerHTML = '';
       list.forEach(sub => {
@@ -69,19 +92,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Push Notification Setup
+  document.getElementById('notify-btn').addEventListener('click', () => {
+    if (!("Notification" in window)) {
+      return alert("This browser does not support web notifications.");
+    }
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification("CampusConnect Reminders Active", {
+          body: "Daily attendance tracking reminder is now enabled!"
+        });
+      }
+    });
+  });
+
+  // Profile Edit Button
+  document.getElementById('profile-btn').addEventListener('click', () => {
+    localStorage.removeItem('campusconnect_user');
+    currentUser = null;
+    initUserSession();
+  });
+
   subjectDropdown.addEventListener('change', (e) => {
     currentSubjectId = e.target.value;
     fetchAttendanceRecords();
   });
 
   document.getElementById('add-subject-btn').addEventListener('click', async () => {
-    const name = prompt('Enter New Subject Name (e.g., Computer Networks):');
-    if (!name) return;
+    const name = prompt('Enter New Subject Name:');
+    if (!name || !currentUser) return;
     try {
       const res = await fetch('/api/subjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ userId: currentUser.id, name })
       });
       if (res.ok) {
         await loadSubjects();
@@ -190,5 +234,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   selectedDateKey = formatDateKey(new Date());
-  loadSubjects();
+  initUserSession();
 });
