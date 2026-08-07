@@ -22,6 +22,15 @@
       </div>
     </header>
 
+    <!-- Subject Selector Bar -->
+    <div class="card subject-bar">
+      <div class="subject-select-group">
+        <label for="subject-dropdown">Active Subject:</label>
+        <select id="subject-dropdown" class="dropdown-input"></select>
+      </div>
+      <button id="add-subject-btn" class="btn btn-primary">+ Add Subject</button>
+    </div>
+
     <main class="dashboard-grid">
       <section class="card calendar-card">
         <div class="calendar-header">
@@ -52,7 +61,7 @@
 
         <div class="stats-container">
           <div class="stat-box main-stat">
-            <span class="stat-label">Attendance Rate</span>
+            <span class="stat-label">Subject Attendance</span>
             <span id="stat-percentage" class="stat-value">0.0%</span>
             <span id="stat-status-badge" class="stat-badge safe">No Data</span>
           </div>
@@ -61,11 +70,11 @@
             <span id="stat-streak" class="stat-value">0 Days</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">Classes Attended</span>
+            <span class="stat-label">Attended</span>
             <span id="stat-attended" class="stat-value">0</span>
           </div>
           <div class="stat-box">
-            <span class="stat-label">Classes Missed</span>
+            <span class="stat-label">Missed</span>
             <span id="stat-absent" class="stat-value">0</span>
           </div>
         </div>

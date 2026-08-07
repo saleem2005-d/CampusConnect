@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const API_URL = '/api/attendance';
   let currentDate = new Date();
   let selectedDateKey = null;
   let attendanceData = {};
+  let currentSubjectId = null;
 
   const monthLabel = document.getElementById('current-month-label');
   const daysGrid = document.getElementById('calendar-days-grid');
   const selectedDateDisplay = document.getElementById('selected-date-display');
   const bunkCalcText = document.getElementById('bunk-calculator-text');
+  const subjectDropdown = document.getElementById('subject-dropdown');
 
   function formatDateKey(dateObj) {
     const y = dateObj.getFullYear();
@@ -16,51 +17,87 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  async function fetchAttendanceRecords() {
+  async function loadSubjects() {
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch('/api/subjects');
+      const list = await res.json();
+      subjectDropdown.innerHTML = '';
+      list.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub.id;
+        opt.textContent = sub.name;
+        subjectDropdown.appendChild(opt);
+      });
+
+      if (list.length > 0) {
+        currentSubjectId = list[0].id;
+        fetchAttendanceRecords();
+      }
+    } catch (err) {
+      console.error('Failed to load subjects:', err);
+    }
+  }
+
+  async function fetchAttendanceRecords() {
+    if (!currentSubjectId) return;
+    try {
+      const res = await fetch(`/api/attendance/${currentSubjectId}`);
       if (res.ok) attendanceData = await res.json();
     } catch (err) {
-      console.error('Server connection error:', err);
+      console.error('Error fetching records:', err);
     }
     renderCalendar();
   }
 
   async function setDayStatus(status) {
-    if (!selectedDateKey) return alert('Please select a date on the calendar first.');
+    if (!selectedDateKey) return alert('Select a date first.');
     try {
       if (status === 'clear') {
-        await fetch(`${API_URL}/${selectedDateKey}`, { method: 'DELETE' });
+        await fetch(`/api/attendance/${currentSubjectId}/${selectedDateKey}`, { method: 'DELETE' });
         delete attendanceData[selectedDateKey];
       } else {
-        await fetch(API_URL, {
+        await fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dateKey: selectedDateKey, status })
+          body: JSON.stringify({ subjectId: currentSubjectId, dateKey: selectedDateKey, status })
         });
         attendanceData[selectedDateKey] = status;
       }
       renderCalendar();
     } catch (err) {
-      alert('Failed to save update.');
+      alert('Failed to update attendance.');
     }
   }
 
-  function calculateStreak() {
-    const sortedDates = Object.keys(attendanceData).sort().reverse();
-    let streak = 0;
-    for (let dateKey of sortedDates) {
-      const status = attendanceData[dateKey];
-      if (status === 'present') streak++;
-      else if (status === 'absent') break;
+  subjectDropdown.addEventListener('change', (e) => {
+    currentSubjectId = e.target.value;
+    fetchAttendanceRecords();
+  });
+
+  document.getElementById('add-subject-btn').addEventListener('click', async () => {
+    const name = prompt('Enter New Subject Name (e.g., Computer Networks):');
+    if (!name) return;
+    try {
+      const res = await fetch('/api/subjects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      if (res.ok) {
+        await loadSubjects();
+        subjectDropdown.value = (await res.json()).id;
+        subjectDropdown.dispatchEvent(new Event('change'));
+      }
+    } catch (err) {
+      alert('Failed to add subject.');
     }
-    return streak;
-  }
+  });
 
   function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    
     if (monthLabel) monthLabel.textContent = `${monthNames[month]} ${year}`;
     if (!daysGrid) return;
 
@@ -111,18 +148,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const total = p + a;
     const pct = total > 0 ? ((p / total) * 100).toFixed(1) : 0;
-    const streak = calculateStreak();
 
     const elPct = document.getElementById('stat-percentage');
     const elAtt = document.getElementById('stat-attended');
     const elAbs = document.getElementById('stat-absent');
-    const elStreak = document.getElementById('stat-streak');
     const badge = document.getElementById('stat-status-badge');
 
     if (elPct) elPct.textContent = `${pct}%`;
     if (elAtt) elAtt.textContent = p;
     if (elAbs) elAbs.textContent = a;
-    if (elStreak) elStreak.textContent = `${streak} ${streak === 1 ? 'Day' : 'Days'}`;
 
     if (badge) {
       if (total === 0) { badge.textContent = 'No Data'; badge.className = 'stat-badge safe'; }
@@ -131,48 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (bunkCalcText) {
-      if (total === 0) bunkCalcText.textContent = 'Select dates on the calendar to analyze safety margins.';
+      if (total === 0) bunkCalcText.textContent = 'Select calendar dates to compute target thresholds.';
       else if (pct >= 75) {
         const bunks = Math.floor((p - 0.75 * total) / 0.75);
-        bunkCalcText.textContent = bunks > 0 ? `You can safely miss the next ${bunks} class(es) while staying above 75%.` : `You are exactly on the margin. Do not skip your next class!`;
+        bunkCalcText.textContent = bunks > 0 ? `Safe! You can miss the next ${bunks} class(es).` : `On the margin. Do not skip your next class!`;
       } else {
         const need = Math.ceil((0.75 * total - p) / 0.25);
-        bunkCalcText.textContent = `You must attend the next ${need} consecutive class(es) to regain 75%.`;
+        bunkCalcText.textContent = `Must attend the next ${need} consecutive class(es) to reach 75%.`;
       }
     }
   }
-
-  document.getElementById('export-btn').addEventListener('click', () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(attendanceData, null, 2));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `CampusConnect_Backup_${formatDateKey(new Date())}.json`);
-    dlAnchorElem.click();
-  });
-
-  const importFileInput = document.getElementById('import-file-input');
-  document.getElementById('import-btn').addEventListener('click', () => importFileInput.click());
-
-  importFileInput.addEventListener('change', (e) => {
-    const fileReader = new FileReader();
-    fileReader.onload = async (event) => {
-      try {
-        const importedData = JSON.parse(event.target.result);
-        for (const [dateKey, status] of Object.entries(importedData)) {
-          await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dateKey, status })
-          });
-        }
-        await fetchAttendanceRecords();
-        alert('Attendance data imported successfully!');
-      } catch (err) {
-        alert('Invalid backup JSON file.');
-      }
-    };
-    if (e.target.files[0]) fileReader.readAsText(e.target.files[0]);
-  });
 
   document.getElementById('btn-mark-present').addEventListener('click', () => setDayStatus('present'));
   document.getElementById('btn-mark-absent').addEventListener('click', () => setDayStatus('absent'));
@@ -188,9 +190,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   selectedDateKey = formatDateKey(new Date());
-  if (selectedDateDisplay) {
-    const p = selectedDateKey.split('-');
-    selectedDateDisplay.textContent = `${p[2]}/${p[1]}/${p[0]}`;
-  }
-  fetchAttendanceRecords();
+  loadSubjects();
 });
