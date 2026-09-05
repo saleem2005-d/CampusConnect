@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = inputUserEmail.value.trim();
       const role = inputUserRole.value.trim();
 
-      if (!name || !email) return;
+      if (!name || !email) {
+        return alert('Please provide your name and email.');
+      }
 
       try {
         const res = await fetch('/api/user/save', {
@@ -52,18 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ name, email, role })
         });
 
-        if (res.ok) {
-          currentUser = await res.json();
+        const data = await res.json();
+
+        if (res.ok && data.id) {
+          currentUser = data;
           localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
           if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
           if (userModal) userModal.classList.add('hidden');
           fetchAttendanceRecords();
         } else {
-          alert('Failed to save profile on server.');
+          alert('Server Error: ' + (data.error || 'Could not save profile.'));
         }
       } catch (err) {
-        // Local fallback if offline
-        currentUser = { id: 'usr_local', name, email, role };
+        console.error('Network failure:', err);
+        // Resilient local fallback
+        currentUser = { id: 'usr_' + Date.now(), name, email, role: role || 'Student' };
         localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
         if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
         if (userModal) userModal.classList.add('hidden');
@@ -82,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         attendanceData = {};
       }
     } catch (err) {
-      console.warn('Backend unavailable, using local memory.');
+      console.warn('Network issue reading attendance, fallback to memory.');
     }
     renderCalendar();
   }
@@ -107,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         attendanceData[selectedDateKey] = status;
       }
     } catch (err) {
-      // Local fallback
       if (status === 'clear') delete attendanceData[selectedDateKey];
       else attendanceData[selectedDateKey] = status;
     }
@@ -230,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!("Notification" in window)) return alert("Browser does not support notifications.");
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
-        new Notification("CampusConnect Active", { body: "Daily attendance tracking reminder activated!" });
+        new Notification("CampusConnect Active", { body: "Daily attendance reminder activated!" });
       }
     });
   });
