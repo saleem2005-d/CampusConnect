@@ -12,23 +12,36 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const dbPath = path.resolve(__dirname, 'campusconnect.db');
-let db;
+let db = null;
 
 function persistToDisk() {
   if (db) {
-    const data = db.export();
-    fs.writeFileSync(dbPath, Buffer.from(data));
+    try {
+      const data = db.export();
+      fs.writeFileSync(dbPath, Buffer.from(data));
+    } catch (err) {
+      console.error('Disk write error:', err);
+    }
   }
 }
 
+// Middleware to ensure Database is ready before any API call executes
+app.use('/api', (req, res, next) => {
+  if (!db) {
+    return res.status(503).json({ error: 'Database engine is initializing, retry in a moment.' });
+  }
+  next();
+});
+
 initSqlJs().then((SQL) => {
-  if (fs.existsSync(dbPath)) {
-    try {
-      db = new SQL.Database(fs.readFileSync(dbPath));
-    } catch (e) {
+  try {
+    if (fs.existsSync(dbPath)) {
+      const fileBuffer = fs.readFileSync(dbPath);
+      db = new SQL.Database(fileBuffer);
+    } else {
       db = new SQL.Database();
     }
-  } else {
+  } catch (err) {
     db = new SQL.Database();
   }
 
@@ -52,81 +65,77 @@ initSqlJs().then((SQL) => {
 
   persistToDisk();
 
-  // Save / Login User Profile
+  // Save / Login User Profile (Safe execution)
   app.post('/api/user/save', (req, res) => {
     const { name, email, role } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const cleanRole = role ? role.trim() : 'Student';
 
     try {
-      const stmt = db.prepare("SELECT id, name, email, role FROM users WHERE email = ?");
-      stmt.bind([email.trim().toLowerCase()]);
+      const query = "SELECT id, name, email, role FROM users WHERE email = '" + cleanEmail.replace(/'/g, "''") + "';";
+      const result = db.exec(query);
       let user;
 
-      if (stmt.step()) {
-        const row = stmt.get();
-        user = { id: row[0], name: name.trim(), email: row[2], role: role || row[3] || '' };
-        stmt.free();
-        db.run("UPDATE users SET name = ?, role = ? WHERE id = ?;", [user.name, user.role, user.id]);
+      if (result.length > 0 && result[0].values.length > 0) {
+        const row = result[0].values[0];
+        const userId = row[0];
+        db.run(
+          "UPDATE users SET name = '" + cleanName.replace(/'/g, "''") + "', role = '" + cleanRole.replace(/'/g, "''") + "' WHERE id = '" + userId + "';"
+        );
+        user = { id: userId, name: cleanName, email: cleanEmail, role: cleanRole };
       } else {
-        stmt.free();
-        user = {
-          id: 'usr_' + Date.now(),
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          role: role ? role.trim() : 'Student'
-        };
-        db.run("INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?);", [user.id, user.name, user.email, user.role]);
+        const newId = 'usr_' + Date.now();
+        db.run(
+          "INSERT INTO users (id, name, email, role) VALUES ('" + newId + "', '" + cleanName.replace(/'/g, "''") + "', '" + cleanEmail.replace(/'/g, "''") + "', '" + cleanRole.replace(/'/g, "''") + "');"
+        );
+        user = { id: newId, name: cleanName, email: cleanEmail, role: cleanRole };
       }
 
       persistToDisk();
-      res.json(user);
+      return res.json(user);
     } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // Get User Profile
-  app.get('/api/user/:id', (req, res) => {
-    try {
-      const stmt = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?");
-      stmt.bind([req.params.id]);
-      if (stmt.step()) {
-        const row = stmt.get();
-        stmt.free();
-        return res.json({ id: row[0], name: row[1], email: row[2], role: row[3] });
-      }
-      stmt.free();
-      res.status(404).json({ error: 'User not found' });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error('Save error:', err);
+      return res.status(500).json({ error: err.message });
     }
   });
 
   // Fetch Attendance by User
   app.get('/api/attendance/:userId', (req, res) => {
+    const cleanUserId = req.params.userId.replace(/'/g, "''");
     try {
-      const stmt = db.prepare("SELECT date_key, status FROM attendance WHERE user_id = ?");
-      stmt.bind([req.params.userId]);
+      const result = db.exec("SELECT date_key, status FROM attendance WHERE user_id = '" + cleanUserId + "';");
       const records = {};
-      while (stmt.step()) {
-        const row = stmt.get();
-        records[row[0]] = row[1];
+      if (result.length > 0 && result[0].values.length > 0) {
+        result[0].values.forEach(row => {
+          records[row[0]] = row[1];
+        });
       }
-      stmt.free();
       res.json(records);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Save / Update Attendance
+  // Record Attendance
   app.post('/api/attendance', (req, res) => {
     const { userId, dateKey, status } = req.body;
     if (!userId || !dateKey || !['present', 'absent', 'holiday'].includes(status)) {
       return res.status(400).json({ error: 'Invalid payload' });
     }
+
+    const cleanUserId = userId.replace(/'/g, "''");
+    const cleanDateKey = dateKey.replace(/'/g, "''");
+    const cleanStatus = status.replace(/'/g, "''");
+
     try {
-      db.run("INSERT OR REPLACE INTO attendance (user_id, date_key, status) VALUES (?, ?, ?);", [userId, dateKey, status]);
+      db.run(
+        "INSERT OR REPLACE INTO attendance (user_id, date_key, status) VALUES ('" + cleanUserId + "', '" + cleanDateKey + "', '" + cleanStatus + "');"
+      );
       persistToDisk();
       res.json({ success: true, dateKey, status });
     } catch (err) {
@@ -136,8 +145,11 @@ initSqlJs().then((SQL) => {
 
   // Delete Date Status
   app.delete('/api/attendance/:userId/:dateKey', (req, res) => {
+    const cleanUserId = req.params.userId.replace(/'/g, "''");
+    const cleanDateKey = req.params.dateKey.replace(/'/g, "''");
+
     try {
-      db.run("DELETE FROM attendance WHERE user_id = ? AND date_key = ?;", [req.params.userId, req.params.dateKey]);
+      db.run("DELETE FROM attendance WHERE user_id = '" + cleanUserId + "' AND date_key = '" + cleanDateKey + "';");
       persistToDisk();
       res.json({ success: true });
     } catch (err) {
@@ -145,10 +157,11 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Clear All Records for User
+  // Reset Records
   app.delete('/api/attendance/reset/:userId', (req, res) => {
+    const cleanUserId = req.params.userId.replace(/'/g, "''");
     try {
-      db.run("DELETE FROM attendance WHERE user_id = ?;", [req.params.userId]);
+      db.run("DELETE FROM attendance WHERE user_id = '" + cleanUserId + "';");
       persistToDisk();
       res.json({ success: true });
     } catch (err) {
@@ -157,6 +170,8 @@ initSqlJs().then((SQL) => {
   });
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
+    console.log(`Server listening on port ${PORT}`);
   });
-}).catch(err => console.error(err));
+}).catch((err) => {
+  console.error('Failed to boot sql.js engine:', err);
+});
