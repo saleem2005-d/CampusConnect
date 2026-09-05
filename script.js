@@ -4,14 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let attendanceData = {};
   let currentUser = JSON.parse(localStorage.getItem('campusconnect_user')) || null;
 
-  // DOM Elements
   const monthLabel = document.getElementById('current-month-label');
   const daysGrid = document.getElementById('calendar-days-grid');
   const selectedDateDisplay = document.getElementById('selected-date-display');
   const bunkCalcText = document.getElementById('bunk-calculator-text');
   const userGreeting = document.getElementById('user-greeting');
 
-  // Modals & Profile Elements
   const userModal = document.getElementById('user-modal');
   const userForm = document.getElementById('user-form');
   const inputUserName = document.getElementById('input-user-name');
@@ -35,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (userModal) userModal.classList.add('hidden');
       fetchAttendanceRecords();
     }
+    renderCalendar();
   }
 
   if (userForm) {
@@ -57,11 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
           currentUser = await res.json();
           localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
           if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
-          userModal.classList.add('hidden');
+          if (userModal) userModal.classList.add('hidden');
           fetchAttendanceRecords();
+        } else {
+          alert('Failed to save profile on server.');
         }
       } catch (err) {
-        alert('Server unreachable. Please check backend execution.');
+        // Local fallback if offline
+        currentUser = { id: 'usr_local', name, email, role };
+        localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
+        if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
+        if (userModal) userModal.classList.add('hidden');
+        renderCalendar();
       }
     });
   }
@@ -76,15 +82,17 @@ document.addEventListener('DOMContentLoaded', () => {
         attendanceData = {};
       }
     } catch (err) {
-      console.error('Error fetching attendance:', err);
-      attendanceData = {};
+      console.warn('Backend unavailable, using local memory.');
     }
     renderCalendar();
   }
 
   async function setDayStatus(status) {
     if (!selectedDateKey) return alert('Select a date on the calendar first.');
-    if (!currentUser) return alert('Setup your profile first.');
+    if (!currentUser) {
+      if (userModal) userModal.classList.remove('hidden');
+      return;
+    }
 
     try {
       if (status === 'clear') {
@@ -98,10 +106,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         attendanceData[selectedDateKey] = status;
       }
-      renderCalendar();
     } catch (err) {
-      alert('Failed to update attendance status.');
+      // Local fallback
+      if (status === 'clear') delete attendanceData[selectedDateKey];
+      else attendanceData[selectedDateKey] = status;
     }
+
+    renderCalendar();
+  }
+
+  function calculateStreak() {
+    const dates = Object.keys(attendanceData).sort().reverse();
+    let streak = 0;
+    for (let key of dates) {
+      if (attendanceData[key] === 'present') streak++;
+      else if (attendanceData[key] === 'absent') break;
+    }
+    return streak;
   }
 
   function renderCalendar() {
@@ -161,21 +182,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const total = p + a;
     const pct = total > 0 ? ((p / total) * 100).toFixed(1) : 0;
+    const streak = calculateStreak();
 
     const elPct = document.getElementById('stat-percentage');
     const elAtt = document.getElementById('stat-attended');
     const elAbs = document.getElementById('stat-absent');
-    const elHol = document.getElementById('stat-holidays');
+    const elStreak = document.getElementById('stat-streak');
     const badge = document.getElementById('stat-status-badge');
 
     if (elPct) elPct.textContent = `${pct}%`;
     if (elAtt) elAtt.textContent = p;
     if (elAbs) elAbs.textContent = a;
-    if (elHol) elHol.textContent = h;
+    if (elStreak) elStreak.textContent = `${streak} ${streak === 1 ? 'Day' : 'Days'}`;
 
     if (badge) {
       if (total === 0) { badge.textContent = 'No Data'; badge.className = 'stat-badge safe'; }
-      else if (pct >= 75) { badge.textContent = 'Safe (≥75%)'; badge.className = 'stat-badge safe'; }
+      else if (pct >= 75) { badge.textContent = 'Safe (=75%)'; badge.className = 'stat-badge safe'; }
       else { badge.textContent = 'Critical (<75%)'; badge.className = 'stat-badge warning'; }
     }
 
@@ -191,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Event Listeners
   document.getElementById('btn-mark-present').addEventListener('click', () => setDayStatus('present'));
   document.getElementById('btn-mark-absent').addEventListener('click', () => setDayStatus('absent'));
   document.getElementById('btn-mark-holiday').addEventListener('click', () => setDayStatus('holiday'));
@@ -231,16 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (resetDataBtn) {
     resetDataBtn.addEventListener('click', async () => {
-      if (!confirm('Are you sure you want to clear all attendance records?')) return;
+      if (!confirm('Are you sure you want to clear all your attendance records?')) return;
       if (!currentUser) return;
       try {
         await fetch(`/api/attendance/reset/${currentUser.id}`, { method: 'DELETE' });
-        attendanceData = {};
-        renderCalendar();
-        alert('All attendance records have been reset.');
-      } catch (err) {
-        alert('Failed to reset records.');
-      }
+      } catch (err) {}
+      attendanceData = {};
+      renderCalendar();
+      alert('Records cleared.');
     });
   }
 
@@ -249,5 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const p = selectedDateKey.split('-');
     selectedDateDisplay.textContent = `${p[2]}/${p[1]}/${p[0]}`;
   }
+  
   initUserSession();
 });

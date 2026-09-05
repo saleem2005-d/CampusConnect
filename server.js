@@ -17,18 +17,15 @@ let db;
 function persistToDisk() {
   if (db) {
     const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(dbPath, buffer);
+    fs.writeFileSync(dbPath, Buffer.from(data));
   }
 }
 
 initSqlJs().then((SQL) => {
   if (fs.existsSync(dbPath)) {
     try {
-      const fileBuffer = fs.readFileSync(dbPath);
-      db = new SQL.Database(fileBuffer);
-      console.log('Database loaded successfully.');
-    } catch (err) {
+      db = new SQL.Database(fs.readFileSync(dbPath));
+    } catch (e) {
       db = new SQL.Database();
     }
   } else {
@@ -49,46 +46,67 @@ initSqlJs().then((SQL) => {
       user_id TEXT NOT NULL,
       date_key TEXT NOT NULL,
       status TEXT NOT NULL,
-      PRIMARY KEY (user_id, date_key),
-      FOREIGN KEY(user_id) REFERENCES users(id)
+      PRIMARY KEY (user_id, date_key)
     );
   `);
 
   persistToDisk();
 
-  // Save / Update User Profile
+  // Save / Login User Profile
   app.post('/api/user/save', (req, res) => {
     const { name, email, role } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email required.' });
+    if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
 
     try {
       const stmt = db.prepare("SELECT id, name, email, role FROM users WHERE email = ?");
-      stmt.bind([email]);
-      let userId;
+      stmt.bind([email.trim().toLowerCase()]);
+      let user;
 
       if (stmt.step()) {
         const row = stmt.get();
-        userId = row[0];
+        user = { id: row[0], name: name.trim(), email: row[2], role: role || row[3] || '' };
         stmt.free();
-        db.run("UPDATE users SET name = ?, role = ? WHERE id = ?;", [name, role || '', userId]);
+        db.run("UPDATE users SET name = ?, role = ? WHERE id = ?;", [user.name, user.role, user.id]);
       } else {
         stmt.free();
-        userId = 'usr_' + Date.now();
-        db.run("INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?);", [userId, name, email, role || '']);
+        user = {
+          id: 'usr_' + Date.now(),
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          role: role ? role.trim() : 'Student'
+        };
+        db.run("INSERT INTO users (id, name, email, role) VALUES (?, ?, ?, ?);", [user.id, user.name, user.email, user.role]);
       }
+
       persistToDisk();
-      res.json({ id: userId, name, email, role: role || '' });
+      res.json(user);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Fetch User Attendance
+  // Get User Profile
+  app.get('/api/user/:id', (req, res) => {
+    try {
+      const stmt = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?");
+      stmt.bind([req.params.id]);
+      if (stmt.step()) {
+        const row = stmt.get();
+        stmt.free();
+        return res.json({ id: row[0], name: row[1], email: row[2], role: row[3] });
+      }
+      stmt.free();
+      res.status(404).json({ error: 'User not found' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Fetch Attendance by User
   app.get('/api/attendance/:userId', (req, res) => {
-    const { userId } = req.params;
     try {
       const stmt = db.prepare("SELECT date_key, status FROM attendance WHERE user_id = ?");
-      stmt.bind([userId]);
+      stmt.bind([req.params.userId]);
       const records = {};
       while (stmt.step()) {
         const row = stmt.get();
@@ -101,26 +119,25 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Record Attendance
+  // Save / Update Attendance
   app.post('/api/attendance', (req, res) => {
     const { userId, dateKey, status } = req.body;
     if (!userId || !dateKey || !['present', 'absent', 'holiday'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid parameters.' });
+      return res.status(400).json({ error: 'Invalid payload' });
     }
     try {
       db.run("INSERT OR REPLACE INTO attendance (user_id, date_key, status) VALUES (?, ?, ?);", [userId, dateKey, status]);
       persistToDisk();
-      res.json({ success: true, userId, dateKey, status });
+      res.json({ success: true, dateKey, status });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Delete Attendance Entry
+  // Delete Date Status
   app.delete('/api/attendance/:userId/:dateKey', (req, res) => {
-    const { userId, dateKey } = req.params;
     try {
-      db.run("DELETE FROM attendance WHERE user_id = ? AND date_key = ?;", [userId, dateKey]);
+      db.run("DELETE FROM attendance WHERE user_id = ? AND date_key = ?;", [req.params.userId, req.params.dateKey]);
       persistToDisk();
       res.json({ success: true });
     } catch (err) {
@@ -128,11 +145,10 @@ initSqlJs().then((SQL) => {
     }
   });
 
-  // Reset All User Data
+  // Clear All Records for User
   app.delete('/api/attendance/reset/:userId', (req, res) => {
-    const { userId } = req.params;
     try {
-      db.run("DELETE FROM attendance WHERE user_id = ?;", [userId]);
+      db.run("DELETE FROM attendance WHERE user_id = ?;", [req.params.userId]);
       persistToDisk();
       res.json({ success: true });
     } catch (err) {
@@ -141,6 +157,6 @@ initSqlJs().then((SQL) => {
   });
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`CampusConnect Server running on port ${PORT}`);
+    console.log(`Server running at http://127.0.0.1:${PORT}`);
   });
-}).catch(err => console.error('Database initialization error:', err));
+}).catch(err => console.error(err));

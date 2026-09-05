@@ -3,33 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CampusConnect — Student Attendance Engine</title>
+  <title>CampusConnect � Attendance Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Top Bar -->
     <header class="app-header">
       <div>
         <h1 class="brand-title">CampusConnect</h1>
-        <p class="subtitle" id="user-greeting">Loading student profile...</p>
+        <p class="subtitle" id="user-greeting">Welcome, Student</p>
       </div>
       <div class="header-actions">
-        <button id="notify-btn" class="btn-icon" title="Daily Reminders">🔔</button>
-        <button id="profile-btn" class="btn-icon" title="Developer & Student Profile">👤</button>
-        <button id="theme-toggle" class="btn-icon" title="Toggle Dark/Light Mode">🌓</button>
+        <button id="notify-btn" class="btn-icon" title="Daily Notification">??</button>
+        <button id="profile-btn" class="btn-icon" title="User Profile">??</button>
+        <button id="theme-toggle" class="btn-icon" title="Toggle Theme">??</button>
       </div>
     </header>
 
-    <!-- Main Dashboard Grid -->
     <main class="dashboard-grid">
-      <!-- Calendar Card -->
+      <!-- Calendar View -->
       <section class="card calendar-card">
         <div class="calendar-header">
-          <button id="prev-month-btn" class="btn-month" aria-label="Previous Month">&lt;</button>
-          <h2 id="current-month-label">Month Year</h2>
-          <button id="next-month-btn" class="btn-month" aria-label="Next Month">&gt;</button>
+          <button id="prev-month-btn" class="btn-month">&lt;</button>
+          <h2 id="current-month-label">Calendar</h2>
+          <button id="next-month-btn" class="btn-month">&gt;</button>
         </div>
 
         <div class="calendar-weekdays">
@@ -39,18 +37,18 @@
         <div id="calendar-days-grid" class="days-grid"></div>
       </section>
 
-      <!-- Analytics & Controls Card -->
+      <!-- Dashboard Controls -->
       <section class="card controls-card">
         <div class="selected-date-wrapper">
-          <span class="label">Target Date: </span>
-          <span id="selected-date-display" class="date-val">Today</span>
+          <span class="label">Selected Date: </span>
+          <span id="selected-date-display" class="date-val">None</span>
         </div>
         
         <div class="action-buttons">
-          <button id="btn-mark-present" class="btn btn-present">✓ Present</button>
-          <button id="btn-mark-absent" class="btn btn-absent">✕ Absent</button>
-          <button id="btn-mark-holiday" class="btn btn-holiday">🏖 Holiday</button>
-          <button id="btn-mark-clear" class="btn btn-clear">🧹 Clear</button>
+          <button id="btn-mark-present" class="btn btn-present">? Present</button>
+          <button id="btn-mark-absent" class="btn btn-absent">? Absent</button>
+          <button id="btn-mark-holiday" class="btn btn-holiday">?? Holiday</button>
+          <button id="btn-mark-clear" class="btn btn-clear">?? Clear</button>
         </div>
 
         <div class="stats-container">
@@ -60,6 +58,10 @@
             <span id="stat-status-badge" class="stat-badge safe">No Data</span>
           </div>
           <div class="stat-box">
+            <span class="stat-label">Streak</span>
+            <span id="stat-streak" class="stat-value">0 Days</span>
+          </div>
+          <div class="stat-box">
             <span class="stat-label">Attended</span>
             <span id="stat-attended" class="stat-value">0</span>
           </div>
@@ -67,28 +69,24 @@
             <span class="stat-label">Missed</span>
             <span id="stat-absent" class="stat-value">0</span>
           </div>
-          <div class="stat-box">
-            <span class="stat-label">Holidays</span>
-            <span id="stat-holidays" class="stat-value">0</span>
-          </div>
         </div>
 
         <div class="bunk-calculator">
-          <h4>Bunk Safety Margin</h4>
+          <h4>Bunk Analysis Engine</h4>
           <p id="bunk-calculator-text">Select calendar dates to compute target thresholds.</p>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Advanced Student & Developer Profile Modal -->
+  <!-- Profile & Login Modal -->
   <div id="user-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Student Account Dashboard</h3>
+        <h3>Student Profile</h3>
         <button id="close-profile-modal-btn" class="btn-close">&times;</button>
       </div>
-      <p class="modal-desc">Configure your profile details and app preferences.</p>
+      <p class="modal-desc">Login or update your student account credentials.</p>
       
       <form id="user-form">
         <div class="form-group">
@@ -97,28 +95,16 @@
         </div>
         <div class="form-group">
           <label for="input-user-email">Email Address</label>
-          <input type="email" id="input-user-email" class="text-input" placeholder="e.g. saleem@example.com" required>
+          <input type="email" id="input-user-email" class="text-input" placeholder="e.g. saleem@gmail.com" required>
         </div>
         <div class="form-group">
-          <label for="input-user-role">Academic Track / Department</label>
-          <input type="text" id="input-user-role" class="text-input" placeholder="e.g. Computer Science & Engineering (3rd Year)">
-        </div>
-
-        <!-- System Status & Data Controls -->
-        <div class="profile-system-info">
-          <div class="info-row">
-            <span>Database Storage:</span>
-            <strong id="db-status-label">SQLite WASM (Active)</strong>
-          </div>
-          <div class="info-row">
-            <span>Target Threshold:</span>
-            <strong>75.0% Minimum</strong>
-          </div>
+          <label for="input-user-role">Department / Track</label>
+          <input type="text" id="input-user-role" class="text-input" placeholder="e.g. Computer Science Engineering">
         </div>
 
         <div class="modal-actions">
-          <button type="button" id="reset-data-btn" class="btn btn-danger">Clear All Records</button>
-          <button type="submit" class="btn btn-primary">Save Profile</button>
+          <button type="button" id="reset-data-btn" class="btn btn-danger">Reset Data</button>
+          <button type="submit" class="btn btn-primary">Save & Continue</button>
         </div>
       </form>
     </div>
