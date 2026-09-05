@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentDate = new Date();
   let selectedDateKey = null;
   let attendanceData = {};
-  let currentUser = JSON.parse(localStorage.getItem('campusconnect_user')) || null;
+  let currentUser = JSON.parse(localStorage.getItem('campusconnect_auth_user')) || null;
+  let isRegisterMode = false;
 
   const monthLabel = document.getElementById('current-month-label');
   const daysGrid = document.getElementById('calendar-days-grid');
@@ -10,13 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const bunkCalcText = document.getElementById('bunk-calculator-text');
   const userGreeting = document.getElementById('user-greeting');
 
-  const userModal = document.getElementById('user-modal');
-  const userForm = document.getElementById('user-form');
-  const inputUserName = document.getElementById('input-user-name');
-  const inputUserEmail = document.getElementById('input-user-email');
-  const inputUserRole = document.getElementById('input-user-role');
-  const closeProfileModalBtn = document.getElementById('close-profile-modal-btn');
-  const resetDataBtn = document.getElementById('reset-data-btn');
+  const authModal = document.getElementById('auth-modal');
+  const authForm = document.getElementById('auth-form');
+  const authTitle = document.getElementById('auth-title');
+  const authDesc = document.getElementById('auth-desc');
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const authToggleBtn = document.getElementById('auth-toggle-btn');
+  const authToggleText = document.getElementById('auth-toggle-text');
+  const logoutBtn = document.getElementById('logout-btn');
+  const closeAuthModalBtn = document.getElementById('close-auth-modal-btn');
+
+  const groupName = document.getElementById('group-name');
+  const groupEmail = document.getElementById('group-email');
+  const inputName = document.getElementById('input-name');
+  const inputUsername = document.getElementById('input-username');
+  const inputPassword = document.getElementById('input-password');
+  const inputEmail = document.getElementById('input-email');
 
   function formatDateKey(dateObj) {
     const y = dateObj.getFullYear();
@@ -25,69 +35,99 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  function initUserSession() {
-    if (!currentUser) {
-      if (userModal) userModal.classList.remove('hidden');
+  function setAuthMode(register) {
+    isRegisterMode = register;
+    if (register) {
+      authTitle.textContent = 'Create New Account';
+      authDesc.textContent = 'Pick a unique username and password to secure your records.';
+      authSubmitBtn.textContent = 'Create Account';
+      authToggleText.textContent = 'Already have an account?';
+      authToggleBtn.textContent = 'Log In';
+      groupName.style.display = 'block';
+      groupEmail.style.display = 'block';
+      logoutBtn.style.display = 'none';
     } else {
-      if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
-      if (userModal) userModal.classList.add('hidden');
+      authTitle.textContent = 'Login to CampusConnect';
+      authDesc.textContent = 'Enter your credentials to access your attendance metrics.';
+      authSubmitBtn.textContent = 'Log In';
+      authToggleText.textContent = 'Need an account?';
+      authToggleBtn.textContent = 'Register';
+      groupName.style.display = 'none';
+      groupEmail.style.display = 'none';
+      logoutBtn.style.display = currentUser ? 'inline-flex' : 'none';
+    }
+  }
+
+  function initSession() {
+    if (!currentUser) {
+      setAuthMode(false);
+      authModal.classList.remove('hidden');
+      userGreeting.textContent = 'Please log in';
+    } else {
+      authModal.classList.add('hidden');
+      userGreeting.textContent = `Welcome, ${currentUser.name || currentUser.username}`;
       fetchAttendanceRecords();
     }
     renderCalendar();
   }
 
-  if (userForm) {
-    userForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = inputUserName.value.trim();
-      const email = inputUserEmail.value.trim();
-      const role = inputUserRole.value.trim();
+  authToggleBtn.addEventListener('click', () => {
+    setAuthMode(!isRegisterMode);
+  });
 
-      if (!name || !email) {
-        return alert('Please provide your name and email.');
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = inputUsername.value.trim();
+    const password = inputPassword.value;
+    const name = inputName.value.trim();
+    const email = inputEmail.value.trim();
+
+    if (!username || !password) return alert('Username and Password are required.');
+
+    const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+    const payload = isRegisterMode
+      ? { username, password, name, email }
+      : { username, password };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        currentUser = data;
+        localStorage.setItem('campusconnect_auth_user', JSON.stringify(currentUser));
+        authModal.classList.add('hidden');
+        inputPassword.value = '';
+        userGreeting.textContent = `Welcome, ${currentUser.name || currentUser.username}`;
+        fetchAttendanceRecords();
+      } else {
+        alert(data.error || 'Authentication error.');
       }
+    } catch (err) {
+      alert('Unable to reach server. Please try again.');
+    }
+  });
 
-      try {
-        const res = await fetch('/api/user/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, role })
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.id) {
-          currentUser = data;
-          localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
-          if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
-          if (userModal) userModal.classList.add('hidden');
-          fetchAttendanceRecords();
-        } else {
-          alert('Server Error: ' + (data.error || 'Could not save profile.'));
-        }
-      } catch (err) {
-        console.error('Network failure:', err);
-        // Resilient local fallback
-        currentUser = { id: 'usr_' + Date.now(), name, email, role: role || 'Student' };
-        localStorage.setItem('campusconnect_user', JSON.stringify(currentUser));
-        if (userGreeting) userGreeting.textContent = `Welcome, ${currentUser.name}`;
-        if (userModal) userModal.classList.add('hidden');
-        renderCalendar();
-      }
-    });
-  }
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('campusconnect_auth_user');
+    currentUser = null;
+    attendanceData = {};
+    inputUsername.value = '';
+    inputPassword.value = '';
+    initSession();
+  });
 
   async function fetchAttendanceRecords() {
     if (!currentUser) return;
     try {
-      const res = await fetch(`/api/attendance/${currentUser.id}`);
-      if (res.ok) {
-        attendanceData = await res.json();
-      } else {
-        attendanceData = {};
-      }
+      const res = await fetch(`/api/attendance/${encodeURIComponent(currentUser.username)}`);
+      if (res.ok) attendanceData = await res.json();
     } catch (err) {
-      console.warn('Network issue reading attendance, fallback to memory.');
+      console.warn('Network issue reading attendance.');
     }
     renderCalendar();
   }
@@ -95,19 +135,20 @@ document.addEventListener('DOMContentLoaded', () => {
   async function setDayStatus(status) {
     if (!selectedDateKey) return alert('Select a date on the calendar first.');
     if (!currentUser) {
-      if (userModal) userModal.classList.remove('hidden');
+      setAuthMode(false);
+      authModal.classList.remove('hidden');
       return;
     }
 
     try {
       if (status === 'clear') {
-        await fetch(`/api/attendance/${currentUser.id}/${selectedDateKey}`, { method: 'DELETE' });
+        await fetch(`/api/attendance/${encodeURIComponent(currentUser.username)}/${selectedDateKey}`, { method: 'DELETE' });
         delete attendanceData[selectedDateKey];
       } else {
         await fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id, dateKey: selectedDateKey, status })
+          body: JSON.stringify({ username: currentUser.username, dateKey: selectedDateKey, status })
         });
         attendanceData[selectedDateKey] = status;
       }
@@ -234,44 +275,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!("Notification" in window)) return alert("Browser does not support notifications.");
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
-        new Notification("CampusConnect Active", { body: "Daily attendance reminder activated!" });
+        new Notification("CampusConnect Active", { body: "Daily reminders configured!" });
       }
     });
   });
 
   document.getElementById('profile-btn').addEventListener('click', () => {
+    setAuthMode(false);
     if (currentUser) {
-      if (inputUserName) inputUserName.value = currentUser.name || '';
-      if (inputUserEmail) inputUserEmail.value = currentUser.email || '';
-      if (inputUserRole) inputUserRole.value = currentUser.role || '';
+      inputUsername.value = currentUser.username;
+      logoutBtn.style.display = 'inline-flex';
     }
-    if (userModal) userModal.classList.remove('hidden');
+    authModal.classList.remove('hidden');
   });
 
-  if (closeProfileModalBtn) {
-    closeProfileModalBtn.addEventListener('click', () => {
-      if (userModal) userModal.classList.add('hidden');
-    });
-  }
-
-  if (resetDataBtn) {
-    resetDataBtn.addEventListener('click', async () => {
-      if (!confirm('Are you sure you want to clear all your attendance records?')) return;
-      if (!currentUser) return;
-      try {
-        await fetch(`/api/attendance/reset/${currentUser.id}`, { method: 'DELETE' });
-      } catch (err) {}
-      attendanceData = {};
-      renderCalendar();
-      alert('Records cleared.');
-    });
-  }
+  closeAuthModalBtn.addEventListener('click', () => {
+    if (currentUser) authModal.classList.add('hidden');
+  });
 
   selectedDateKey = formatDateKey(new Date());
   if (selectedDateDisplay) {
     const p = selectedDateKey.split('-');
     selectedDateDisplay.textContent = `${p[2]}/${p[1]}/${p[0]}`;
   }
-  
-  initUserSession();
+
+  initSession();
 });

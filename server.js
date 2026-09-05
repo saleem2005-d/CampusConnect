@@ -9,20 +9,17 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
-
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 const dataFilePath = path.join(__dirname, 'database.json');
 
-// Initialize local database file if it doesn't exist
 function loadDatabase() {
   try {
     if (fs.existsSync(dataFilePath)) {
-      const raw = fs.readFileSync(dataFilePath, 'utf8');
-      return JSON.parse(raw);
+      return JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
     }
   } catch (err) {
-    console.error('Error reading DB, re-initializing:', err);
+    console.error('Error reading DB:', err);
   }
   const defaultDB = { users: {}, attendance: {} };
   saveDatabase(defaultDB);
@@ -33,92 +30,112 @@ function saveDatabase(data) {
   try {
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf8');
   } catch (err) {
-    console.error('Error saving DB:', err);
+    console.error('Error writing DB:', err);
   }
 }
 
 let db = loadDatabase();
 
-// 1. Save or Login User
-app.post('/api/user/save', (req, res) => {
+// Register New Account
+app.post('/api/auth/register', (req, res) => {
   try {
-    const { name, email, role } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required.' });
+    const { username, password, name, email } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanName = name.trim();
-    const cleanRole = role ? role.trim() : 'Student';
+    const cleanUsername = username.trim().toLowerCase();
+    if (db.users[cleanUsername]) {
+      return res.status(409).json({ error: 'Username already taken. Please choose another.' });
+    }
 
-    // Check if user exists by email
-    let foundUserId = Object.keys(db.users).find(
-      (id) => db.users[id].email === cleanEmail
-    );
+    const newUser = {
+      username: cleanUsername,
+      password: password,
+      name: name ? name.trim() : cleanUsername,
+      email: email ? email.trim().toLowerCase() : ''
+    };
 
-    let user;
-    if (foundUserId) {
-      db.users[foundUserId].name = cleanName;
-      db.users[foundUserId].role = cleanRole;
-      user = db.users[foundUserId];
-    } else {
-      const newId = 'usr_' + Date.now();
-      user = {
-        id: newId,
-        name: cleanName,
-        email: cleanEmail,
-        role: cleanRole
-      };
-      db.users[newId] = user;
-      db.attendance[newId] = {};
+    db.users[cleanUsername] = newUser;
+    if (!db.attendance[cleanUsername]) {
+      db.attendance[cleanUsername] = {};
     }
 
     saveDatabase(db);
-    return res.status(200).json(user);
+    return res.status(201).json({
+      username: newUser.username,
+      name: newUser.name,
+      email: newUser.email
+    });
   } catch (err) {
-    console.error('Error in /api/user/save:', err);
-    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    return res.status(500).json({ error: 'Registration failed.', details: err.message });
   }
 });
 
-// 2. Fetch Attendance
-app.get('/api/attendance/:userId', (req, res) => {
+// Login Existing Account
+app.post('/api/auth/login', (req, res) => {
   try {
-    const { userId } = req.params;
-    const records = db.attendance[userId] || {};
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
+
+    const cleanUsername = username.trim().toLowerCase();
+    const user = db.users[cleanUsername];
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    return res.status(200).json({
+      username: user.username,
+      name: user.name,
+      email: user.email
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Login failed.', details: err.message });
+  }
+});
+
+// Fetch Attendance by Username
+app.get('/api/attendance/:username', (req, res) => {
+  try {
+    const userKey = req.params.username.trim().toLowerCase();
+    const records = db.attendance[userKey] || {};
     res.json(records);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 3. Mark or Update Attendance
+// Save or Update Attendance
 app.post('/api/attendance', (req, res) => {
   try {
-    const { userId, dateKey, status } = req.body;
-    if (!userId || !dateKey || !status) {
+    const { username, dateKey, status } = req.body;
+    if (!username || !dateKey || !status) {
       return res.status(400).json({ error: 'Missing parameters.' });
     }
 
-    if (!db.attendance[userId]) {
-      db.attendance[userId] = {};
+    const userKey = username.trim().toLowerCase();
+    if (!db.attendance[userKey]) {
+      db.attendance[userKey] = {};
     }
 
-    db.attendance[userId][dateKey] = status;
+    db.attendance[userKey][dateKey] = status;
     saveDatabase(db);
-
     res.json({ success: true, dateKey, status });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 4. Delete Single Date Status
-app.delete('/api/attendance/:userId/:dateKey', (req, res) => {
+// Delete Attendance Date
+app.delete('/api/attendance/:username/:dateKey', (req, res) => {
   try {
-    const { userId, dateKey } = req.params;
-    if (db.attendance[userId] && db.attendance[userId][dateKey]) {
-      delete db.attendance[userId][dateKey];
+    const userKey = req.params.username.trim().toLowerCase();
+    const { dateKey } = req.params;
+    if (db.attendance[userKey] && db.attendance[userKey][dateKey]) {
+      delete db.attendance[userKey][dateKey];
       saveDatabase(db);
     }
     res.json({ success: true });
@@ -127,14 +144,12 @@ app.delete('/api/attendance/:userId/:dateKey', (req, res) => {
   }
 });
 
-// 5. Reset Attendance Data for User
-app.delete('/api/attendance/reset/:userId', (req, res) => {
+// Reset Records
+app.delete('/api/attendance/reset/:username', (req, res) => {
   try {
-    const { userId } = req.params;
-    if (db.attendance[userId]) {
-      db.attendance[userId] = {};
-      saveDatabase(db);
-    }
+    const userKey = req.params.username.trim().toLowerCase();
+    db.attendance[userKey] = {};
+    saveDatabase(db);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -142,5 +157,5 @@ app.delete('/api/attendance/reset/:userId', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server successfully started on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
